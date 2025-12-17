@@ -74,12 +74,12 @@ jobs:
           gcloud builds submit . \
             --service-account=projects/${{ secrets.GCP_PROJECT_ID }}/serviceAccounts/${{ secrets.GCP_SA_EMAIL }} \
             --gcs-log-dir=gs://${{ secrets.GCP_PROJECT_ID }}-cloudbuild-logs \
-            --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}
+            --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:latest
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:latest \
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated \
