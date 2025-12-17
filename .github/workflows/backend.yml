@@ -81,7 +81,7 @@ jobs:
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:latest \
             --platform managed \
-            --region ${{ env.REGION }} \
+            --region asia-northeast1 \
             --allow-unauthenticated \
             --service-account ${{ secrets.GCP_SA_EMAIL }} \
             --memory 4Gi
