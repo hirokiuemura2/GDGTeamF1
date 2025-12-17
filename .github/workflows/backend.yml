@@ -41,6 +41,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: backend-ci
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment: backend
     defaults:
       run:
@@ -60,6 +63,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Who am I?
+        run: |
+          gcloud auth list
+          gcloud config get-value account
 
       - name: Build and push Docker image
         run: |
