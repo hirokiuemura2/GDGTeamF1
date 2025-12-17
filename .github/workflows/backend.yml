@@ -72,6 +72,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           gcloud builds submit . \
+            --service-account=projects/${{ secrets.GCP_PROJECT_ID }}/serviceAccounts/${{ secrets.GCP_SA_EMAIL }} \
             --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ env.SERVICE_NAME }}
 
       - name: Deploy to Cloud Run
