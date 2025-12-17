@@ -41,6 +41,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: backend-ci
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     environment: backend
     defaults:
       run:
