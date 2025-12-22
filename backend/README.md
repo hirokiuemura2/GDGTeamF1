@@ -1,29 +1,36 @@
-# Backend Workshop
+# Backend Guide
 
 ## Quick Start
 
-### Docker Compose
+### 0. Login and get service account key
 
 ```bash
-# Start services
-docker-compose up
+# Log in and set project ID
+gcloud auth login
+gcloud config set project $PROJECT_ID
 
-# Start in background
-docker-compose up -d
-
-# Stop services
-docker-compose down
+# Check the service account and save its key
+gcloud iam service-accounts list
+gcloud iam service-accounts keys create ./key.json \
+  --iam-account "$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
 ```
 
-### Podman Compose
+### 1. Spin up the backend server with different modes 
 
 ```bash
-# Start services
-podman-compose up
+# Build and start services with in production mode
+make build prod
 
-# Start in background
-podman-compose up -d
+# Build and start services in development mode
+make build-dev dev
 
-# Stop services
-podman-compose down
+# Build and start services in test mode and perform cleanup
+make build-test test clean
 ```
+
+> [!HINT]
+> If you don't want to build the image again, just remove the build flag and run server mode you want.
+
+> [!NOTE]
+> The production mode uses real firestore database while the other two modes use containerized firestore emulators to test db operations.
+

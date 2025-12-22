@@ -1,19 +1,16 @@
-def test_get_firestore_client_uses_settings_project(monkeypatch):
+from google.cloud import firestore
+
+
+def test_get_firestore_client_uses_settings_project():
     from app.dependencies import db as db_dep
 
-    created = {}
-
-    class FakeClient:
-        def __init__(self, project):
-            created["project"] = project
-
-    # Patch firestore.Client used in the dependency module
-    monkeypatch.setattr(db_dep.firestore, "Client", FakeClient)
-
     class DummySettings:
-        gcp_project_id = "proj-123"
+        gcp_project_id = "test-project-123"
 
     client = db_dep.get_firestore_client(DummySettings())
-    assert isinstance(client, FakeClient)
-    assert created["project"] == "proj-123"
+
+    # Verify we get a real Firestore client
+    assert isinstance(client, firestore.Client)
+    # In the emulator environment, verify the client is functional
+    assert client.project == "test-project-123"
 

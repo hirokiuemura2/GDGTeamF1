@@ -18,24 +18,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.14
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.14"
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
 
-      - name: Install System Dependencies
+      - name: Run Integration tests with Firestore emulartor
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential
+          docker-compose \
+            -f compose.yml \
+            -f compose.test.yml \
+            up --build --abort-on-container-exit
 
-      - name: Install Python Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run unit tests
-        run: |
-          pytest -v
+      - name: Clean up
+        if: always()
+        run: docker compose down -v
 
   backend-cd:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

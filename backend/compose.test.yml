@@ -1,0 +1,23 @@
+services:
+  firestore:
+    build: ./docker/firestore
+    networks:
+      - backend-net
+    ports:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8000"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  finapp-backend:
+    build: .
+    environment:
+      FIRESTORE_EMULATOR_HOST: firestore:8000
+      GCP_PROJECT_ID: test-project
+      APP_ENV: test
+    depends_on:
+      firestore:
+        condition: service_healthy
+    command: pytest
