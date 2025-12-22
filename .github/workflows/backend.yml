@@ -23,14 +23,18 @@ jobs:
 
       - name: Run Integration tests with Firestore emulartor
         run: |
-          docker-compose \
-            -f compose.yml \
+          docker compose \
+            -f compose.ci.yml \
             -f compose.test.yml \
             up --build --abort-on-container-exit
 
       - name: Clean up
         if: always()
-        run: docker compose down -v
+        run: |
+          docker compose \
+            -f compose.ci.yml \
+            -f compose.test.yml \
+            down -v
 
   backend-cd:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -72,6 +76,9 @@ jobs:
             --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:latest
 
       - name: Deploy to Cloud Run
+        env:
+          APP_ENV: production
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
           gcloud run deploy fin-app-backend \
             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:latest \
@@ -79,4 +86,8 @@ jobs:
             --region asia-northeast1 \
             --allow-unauthenticated \
             --service-account ${{ secrets.GCP_SA_EMAIL }} \
-            --memory 4Gi
+            --memory 4Gi \
+            --set-env-vars "
+            APP_ENV=${APP_ENV},
+            GCP_PROJECT_ID=${GCP_PROJECT_ID}
+          "

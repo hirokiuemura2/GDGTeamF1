@@ -12,11 +12,10 @@ services:
       retries: 30
 
   finapp-backend:
-    build: .
     environment:
       FIRESTORE_EMULATOR_HOST: firestore:8000
       GCP_PROJECT_ID: test-project
-      APP_ENV: test
+      APP_ENV: ci
     depends_on:
       firestore:
         condition: service_healthy

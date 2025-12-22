@@ -15,6 +15,7 @@ dependencies = [
     "executing==2.1.0",
     "fastapi[standard]==0.115.2",
     "google-cloud-firestore>=2.22.0",
+    "google-cloud-secret-manager>=2.26.0",
     "httpx>=0.28.1",
     "ipykernel==6.29.5",
     "ipython==8.27.0",

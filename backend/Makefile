@@ -2,6 +2,7 @@
 
 COMPOSE = docker compose
 BASE = -f compose.yml
+CI = -f compose.ci.yml
 DEV = -f compose.dev.yml
 TEST = -f compose.test.yml
 
@@ -16,7 +17,7 @@ build-dev:
 	$(COMPOSE) $(BASE) $(DEV) build
 
 build-test:
-	$(COMPOSE) $(BASE) $(TEST) build
+	$(COMPOSE) $(CI) $(TEST) build
 
 # Run targets
 
@@ -26,7 +27,7 @@ dev:
 	$(COMPOSE) $(BASE) $(DEV) up
 
 test:
-	$(COMPOSE) $(BASE) $(TEST) up --abort-on-container-exit
+	$(COMPOSE) $(CI) $(TEST) up --abort-on-container-exit
 
 prod:
 	$(COMPOSE) $(BASE) up
