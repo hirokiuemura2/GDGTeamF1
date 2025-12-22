@@ -1,24 +1,25 @@
 from typing import Annotated
 from pydantic_extra_types.currency_code import Currency
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.dependencies.external import get_currency_api
+from app.models.currency_models import CurrencyConvertReq, CurrencyConvertRes
 from app.services.currency_service import CurrencyService
-from ..core import config, http
-from ..infrastructure import CurrencyAPIClient
+from app.infrastructure.currency_api import CurrencyAPIClient
 
 
-router = APIRouter(prefix="/currency", tags=["currency"])
+router = APIRouter(
+    prefix="/currency",
+    tags=["currency"],
+)
 
 
 @router.get("/convert")
 async def convert_currency(
-    amount: float,
-    from_cur: Currency,
-    to_cur: Currency,
-    client: Annotated[httpx.AsyncClient, Depends(http.get_http_client)],
-    settings: Annotated[config.Settings, Depends(config.get_settings)],
-):
+    params: Annotated[CurrencyConvertReq, Query()],
+    api_client: Annotated[CurrencyAPIClient, Depends(get_currency_api)],
+) -> CurrencyConvertRes:
     """
     Converts a monetary amount from one currency to another.
 
@@ -41,17 +42,16 @@ async def convert_currency(
             - Propagated status codes from the currency API on HTTP errors.
             - 502 if a network error occurs while calling the currency API.
     """
-    api_client = CurrencyAPIClient(client, settings.currency_api_key)
     currency_service = CurrencyService(api_client)
 
     try:
-        return {
-            "result": await currency_service.convert(
-                amount,
-                from_cur,
-                to_cur,
+        return CurrencyConvertRes(
+            result=await currency_service.convert(
+                params.amount,
+                params.from_cur,
+                params.to_cur,
             )
-        }
+        )
 
     except httpx.TimeoutException:
         raise HTTPException(

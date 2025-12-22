@@ -1,7 +1,7 @@
 from typing import final
 from pydantic_extra_types.currency_code import Currency
 
-from app.infrastructure import CurrencyAPIClient
+from app.infrastructure.currency_api import CurrencyAPIClient
 
 
 @final
