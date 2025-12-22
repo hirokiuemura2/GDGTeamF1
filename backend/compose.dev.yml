@@ -15,6 +15,9 @@ services:
     environment:
       FIRESTORE_EMULATOR_HOST: firestore:8000
       GCP_PROJECT_ID: local-dev
+      APP_ENV: dev
+    env_file:
+      - path: .env
     depends_on:
       firestore:
         condition: service_healthy
