@@ -4,16 +4,25 @@
 
 ### 0. Login and get service account key
 
+> [!NOTE]
+> 
+> Please check that you have the `gcloud` CLI installed before you run the following commands. For Mac users, install it with `brew install gcloud-cli`. For Windows users, I'm sorry but you are on your own. 
+
 ```bash
 # Log in and set project ID
 gcloud auth login
 gcloud config set project $PROJECT_ID
 
-# Check the service account and save its key
-gcloud iam service-accounts list
+# Check the service account and save its credentials
 gcloud iam service-accounts keys create ./key.json \
   --iam-account "$SA_NAME@$PROJECT_ID.iam.gserviceaccount.com"
 ```
+
+> [!TIP]
+>
+> You can use:
+> - $gcloud projects list$: check the info of all your GCP projects
+> - $gcloud iam service-accounts list$: check the info of your service accounts.
 
 ### 1. Spin up the backend server with different modes 
 
