@@ -1,6 +1,8 @@
 services:
   firestore:
-    build: ./docker/firestore
+    build:
+      context: .
+      dockerfile: ./docker/firestore/Dockerfile.test
     networks:
       - backend-net
     ports:
