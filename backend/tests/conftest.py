@@ -26,6 +26,10 @@ def settings_env(monkeypatch):
     config.get_settings.cache_clear()
     monkeypatch.setenv("CURRENCY_API_KEY", "dummy")
     monkeypatch.setenv("GCP_PROJECT_ID", "test-project")
+    monkeypatch.setenv("JWT_AUTH_PRIVATE_KEY", "dummy-private")
+    monkeypatch.setenv("JWT_AUTH_PUBLIC_KEY", "dummy-public")
+    monkeypatch.setenv("JWT_AUTH_ALGORITHM", "RS256")
+    monkeypatch.setenv("JWT_AUTH_EXPIRES", "3600")
     yield
     config.get_settings.cache_clear()
 

@@ -41,5 +41,6 @@ make build-test test clean
 > If you don't want to build the image again, just remove the build flag and run server mode you want.
 
 > [!NOTE]
-> The production mode uses real firestore database while the other two modes use containerized firestore emulators to test db operations.
+> - The production mode uses real firestore database while the other two modes use containerized firestore emulators to test db operations.
+> - If you what to access firestore emulator with a user interface, spin up server in dev mode and access `http://localhost:4000` through user browser.
 

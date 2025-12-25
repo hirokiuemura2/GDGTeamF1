@@ -1,18 +1,31 @@
 from datetime import datetime
+from enum import Enum
 from typing import Annotated
-from uuid import uuid4
 from pydantic import BaseModel, EmailStr, Field, SecretStr
 
 
+class UserStatus(Enum):
+    activated = "activated"
+    pending = "pending"
+    deactivated = "deactivated"
+
+
+class User(BaseModel):
+    id: str
+    first_name: Annotated[str, Field(strict=True, min_length=1)]
+    last_name: Annotated[str, Field(strict=True, min_length=1)]
+    status: UserStatus
+    email: EmailStr
+
+
 class UserCreateReq(BaseModel):
-    name: Annotated[str, Field(strict=True, min_length=1)]
+    first_name: Annotated[str, Field(strict=True, min_length=1)]
+    last_name: Annotated[str, Field(strict=True, min_length=1)]
     email: EmailStr
     password: SecretStr
 
 
-class UserCreateRes(BaseModel):
+class UserCreateRes(UserCreateReq):
     id: str
-    name: str
-    email: EmailStr
     created_at: datetime
     updated_at: datetime
