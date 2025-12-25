@@ -8,7 +8,7 @@ APP_ENV = os.getenv("APP_ENV", "local")
 
 if APP_ENV not in {"local", "ci", "dev"}:
     load_env_from_secret_manager(
-        secret_name="gdgteamf1-access-token",
+        secret_name="gdgteamf1-env",
         project_id=os.environ["GCP_PROJECT_ID"],
     )
 
