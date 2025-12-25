@@ -3,3 +3,6 @@ __pycache__
 .venv
 .pytest_cache
 key.json
+.cache
+private-key.pem
+public-key.pem.pub

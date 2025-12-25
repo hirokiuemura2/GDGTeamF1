@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.core.env_boostrap import load_env_from_secret_manager
-from app.routers import currency_router, expense_router
+from app.routers import auth_router, currency_router, expense_router
 import os
 
 APP_ENV = os.getenv("APP_ENV", "local")
@@ -15,6 +15,7 @@ if APP_ENV not in {"local", "ci", "dev"}:
 app = FastAPI()
 app.include_router(currency_router.router)
 app.include_router(expense_router.router)
+app.include_router(auth_router.router)
 
 
 @app.get("/healthcheck")
