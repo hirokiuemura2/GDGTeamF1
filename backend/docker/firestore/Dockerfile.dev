@@ -23,5 +23,5 @@ WORKDIR /app
 
 EXPOSE 8000 4000
 
-CMD ["firebase", "emulators:start", "--project", "local-dev", "--debug"]
+CMD ["firebase", "emulators:start", "--project", "local-dev", "--debug", "--import", ".cache/firebase/emulators/firestore-data", "--export-on-exit"]
 
