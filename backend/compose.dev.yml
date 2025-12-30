@@ -1,12 +1,19 @@
 services:
   firestore:
-    build: ./docker/firestore
+    build:
+      context: .
+      dockerfile: ./docker/firestore/dev.Dockerfile
     networks:
       - backend-net
     ports:
-      - 8000:8000
+      - 8000:8000 # firestore
+      - 4000:4000 # ui
+      - 4400:4400 # Emulator Hub
+    volumes:
+      - ./docker/firestore/dev.firebase.json:/app/firebase.json:ro
+      - .cache/firebase/emulators/:/app/.cache/firebase/emulators/
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "8000"]
+      test: ["CMD", "curl", "-sf", "http://localhost:4400"]
       interval: 2s
       timeout: 2s
       retries: 30
