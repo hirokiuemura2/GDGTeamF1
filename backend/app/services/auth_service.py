@@ -3,8 +3,8 @@ from typing import final
 from fastapi.concurrency import run_in_threadpool
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.auth import get_password_hashed, verify_password
-from app.errors.auth import LoginError, UserExistsError, UserNotExistsError
-from app.models.user_models import User, UserCreateReq, UserCreateRes, UserStatus
+from app.errors.auth import LoginError, UserExistsError, UserNotExistsError, GoogleUserNotExistsError
+from app.models.user_models import User, UserCreateReq, UserCreateRes, UserStatus, UserCreateGoogleReq, UserCreateGoogleRes
 from app.repo.user_repo import UserRepo
 
 
@@ -59,4 +59,38 @@ class AuthService:
             last_name=user.get("last_name"),
             status=user.get("status"),
             email=user.get("email"),
+        )
+    
+    async def authenticate_google_user(self, user_info: dict) -> User:
+        user = self.repo.get_user_by_google_sub(user_info['sub'])
+        if len(user) == 0:
+            raise GoogleUserNotExistsError()
+        
+        user = user[0]
+        return User(
+            id=user.id,
+            first_name=user.get("first_name"),
+            last_name=user.get("last_name"),
+            status=user.get("status"),
+            email=user.get("email"),
+        )
+        
+    async def create_google_user(self, payload: UserCreateGoogleReq):
+        user = self.repo.get_user_by_google_sub(payload.google_sub)
+        if len(user) != 0:
+            raise UserExistsError()
+
+        user_dict = {
+            "first_name": payload.first_name,
+            "last_name": payload.last_name,
+            "status": UserStatus.pending.value,
+            "google_sub": payload.google_sub,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        }
+
+        user_id = await run_in_threadpool(self.repo.create_user, user_dict)
+        return UserCreateGoogleRes(
+            id=user_id,
+            **user_dict,  # pyright: ignore[reportArgumentType]
         )
