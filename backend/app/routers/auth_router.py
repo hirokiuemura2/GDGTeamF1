@@ -8,6 +8,7 @@ from authlib.integrations.starlette_client import OAuth
 from app.core.auth import create_access_token, get_oauth
 from app.core.config import Settings, get_settings
 from app.dependencies.services import get_auth_service
+from app.dependencies.auth import get_current_user_id
 from app.errors.auth import AuthError
 from app.errors.http import CredentialException
 from app.models.auth_models import Token
@@ -35,7 +36,6 @@ async def login(
         raise CredentialException(detail=f"{e}")
     return Token(access_token=access_token, token_type="bearer")
 
-
 @router.post("/sign-up")
 async def sign_up(
     payload: UserCreateReq,
@@ -46,6 +46,21 @@ async def sign_up(
     except AuthError as e:
         raise CredentialException(detail=f"{e}")
     return user
+
+@router.post("/delete-user")
+async def delete_user(
+    userid: Annotated[int, Depends(get_current_user_id)],
+    payload: Annotated[OAuth2PasswordRequestForm, Depends()],
+    service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    try:
+        user = await service.autheticate(payload)
+        if user.id != userid:
+            raise CredentialException(detail="User ID mismatch.")
+        confirmation = await service.delete_user(user, userid)
+    except AuthError as e:
+        raise CredentialException(detail=f"{e}")
+    return confirmation
 
 @router.get("/google/login")
 async def google_oauth_login(
@@ -60,6 +75,25 @@ async def google_oauth_login(
     oauth: Annotated[OAuth, Depends(get_oauth)],
 ):
     return await oauth.google.authorize_redirect(request, redirect_uri="http://127.0.0.1:8080/auth/google/sign-up-callback")
+
+@router.post("/google/delete-user")
+async def delete_google_user(
+    request: Request,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+):
+    try:
+        await service.delete_google_user(payload)
+    except AuthError as e:
+        raise CredentialException(detail=f"{e}")
+    return {"detail": "Google user deleted successfully"}
+
+@router.post("/google/delete-user/callback") # To be implemented
+async def google_oauth_delete_user_callback(
+    request: Request,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+    oauth: Annotated[OAuth, Depends(get_oauth)],
+):
+    pass
 
 @router.get("/google/callback")
 async def google_oauth_callback(

@@ -38,6 +38,10 @@ class AuthService:
             **user_dict,  # pyright: ignore[reportArgumentType]
         )
 
+    async def delete_user(self, user: User, userid: int): #add models later
+        await run_in_threadpool(self.repo.delete_user, user.id)
+        return {"detail": f"User {userid} deleted successfully."}
+
     async def autheticate(self, payload: OAuth2PasswordRequestForm) -> User:
         user = self.repo.get_user_by_email(payload.username)
         if len(user) == 0:
@@ -94,3 +98,6 @@ class AuthService:
             id=user_id,
             **user_dict,  # pyright: ignore[reportArgumentType]
         )
+
+    async def delete_google_user(self, payload: UserDeleteGoogleReq):
+        pass
