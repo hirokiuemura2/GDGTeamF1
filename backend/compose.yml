@@ -3,7 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file: .env
+    env_file:
+      - ./.env.local.prod
     volumes:
       - ./key.json:/secrets/key.json:ro
     environment:

@@ -1,6 +1,6 @@
 from typing import Any, final
 
-from google.cloud.firestore import Client, DocumentSnapshot
+from google.cloud.firestore_v1 import Client, DocumentSnapshot, FieldFilter
 from pydantic import EmailStr
 
 
@@ -15,7 +15,7 @@ class UserRepo:
         return doc_ref.id
 
     def get_user_by_email(self, email: EmailStr) -> list[DocumentSnapshot]:
-        doc_query = self.col.where("email", "==", email)
+        doc_query = self.col.where(filter=FieldFilter("email", "==", email))
         return list(doc_query.stream())
 
     def get_user_by_id(self, user_id: str):
