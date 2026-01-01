@@ -41,6 +41,27 @@ make build-test test clean
 > If you don't want to build the image again, just remove the build flag and run server mode you want.
 
 > [!NOTE]
-> - The production mode uses real firestore database while the other two modes use containerized firestore emulators to test db operations.
 > - If you what to access firestore emulator with a user interface, spin up server in dev mode and access `http://localhost:4000` through user browser.
 
+#### Production Mode
+
+- Reflects how the server actually work on production.
+- The `production` mode uses real firestore database while the other two modes use containerized firestore emulators to test db operations.
+- For the `production` mode to work, create `.env.local.prod` and put `GCP_PROJECT_ID=<your-gcp-project-id>` in it.
+
+#### Development Mode
+
+- For the `development` mode to work, you need a .env file with the following environment variables:
+
+```bash
+JWT_AUTH_EXPIRES=60
+JWT_AUTH_ALGORITHM=RS256
+JWT_AUTH_PRIVATE_KEY=""
+JWT_AUTH_PUBLIC_KEY=""
+CURRENCY_API_KEY=<your-currency-api-key>
+GCP_PROJECT_ID=<your-gcp-project-id>
+```
+
+- `CURRENCY_API_KEY`: Visit [Free Currency API](https://app.freecurrencyapi.com/login) to get one
+- `JWT_AUTH_PRIVATE_KEY`: Run `openssl genrsa -out private-key.pem 2048` and copy the value in the `private-key.pem` file.
+- `JWT_AUTH_PUBLIC_KEY`: Run `openssl rsa -in private-key.pem -pubout -out public-key.pem.pub` and copy the value in the `public-key.pem.pub` file.
