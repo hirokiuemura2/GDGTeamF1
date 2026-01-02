@@ -5,7 +5,7 @@
 ### 0. Login and get service account key
 
 > [!NOTE]
-> 
+>
 > Please check that you have the `gcloud` CLI installed before you run the following commands. For Mac users, install it with `brew install gcloud-cli`. For Windows users, I'm sorry but you are on your own. 
 
 ```bash
@@ -21,8 +21,8 @@ gcloud iam service-accounts keys create ./key.json \
 > [!TIP]
 >
 > You can use:
-> - $gcloud projects list$: check the info of all your GCP projects
-> - $gcloud iam service-accounts list$: check the info of your service accounts.
+> - `gcloud projects list`: check the info of all your GCP projects
+> - `gcloud iam service-accounts list`: check the info of your service accounts.
 
 ### 1. Spin up the backend server with different modes 
 
@@ -38,9 +38,11 @@ make build-test test clean
 ```
 
 > [!HINT]
-> If you don't want to build the image again, just remove the build flag and run server mode you want.
+> 
+> - If you don't want to build the image again, just remove the build flag and run the server mode you want.
 
 > [!NOTE]
+> 
 > - If you what to access firestore emulator with a user interface, spin up server in dev mode and access `http://localhost:4000` through user browser.
 
 #### Production Mode
