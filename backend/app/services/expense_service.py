@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from app.models.expense_models import ExpenseCreateReq, ExpenseCreateRes
+from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, ExpenseGetReq, SubscriptionCreateReq, SubscriptionCreateRes
 from app.repo.expense_repo import ExpenseRepo
 from fastapi.concurrency import run_in_threadpool
 
@@ -23,3 +23,37 @@ class ExpenseService:
             created_at=datetime.now(timezone.utc),
             **expense_dict,  # pyright: ignore[reportArgumentType]
         )
+    
+    # async delete_expense(self, expense_id: str) -> None:
+    #     await run_in_threadpool(self.repo.delete_expense, expense_id)
+
+    async def get_expense(self, payload: ExpenseGetReq) -> list[Expense]:
+        if payload.id is not None:
+            expense_data = await run_in_threadpool(self.repo.get_expense_by_id, payload.id)
+        else:
+            if payload.occurred_on is not None:
+                payload.occurred_after = payload.occurred_on.replace(hour=0, minute=0, second=0, microsecond=0)
+                payload.occurred_before = payload.occurred_on.replace(hour=23, minute=59, second=59, microsecond=999999)
+            expense_data = await run_in_threadpool(self.repo.get_expenses, **payload.model_dump(exclude={"id", "occurred_on"}))
+        if expense_data is None:
+            return []
+        return [Expense(**data) for data in expense_data]  # pyright: ignore[reportArgumentType]
+    
+    async def create_recurring_expense(self, payload: SubscriptionCreateReq) -> SubscriptionCreateRes:
+        expense_dict = {
+            "amount": payload.amount,
+            "currency": payload.currency,
+            "category": payload.category,
+            "description": payload.description,
+            "occurred_at": payload.occurred_at,
+            "interval": payload.interval,
+        }
+        expense_id = await run_in_threadpool(self.repo.create_subscription, expense_dict)
+        return SubscriptionCreateRes(
+            id=expense_id,
+            created_at=datetime.now(timezone.utc),
+            **expense_dict,  # pyright: ignore[reportArgumentType]
+        )
+    
+    # async def delete_recurring_expense(self, expense_id: str) -> None:
+    #     await run_in_threadpool(self.repo.delete_recurring_expense, expense_id)
