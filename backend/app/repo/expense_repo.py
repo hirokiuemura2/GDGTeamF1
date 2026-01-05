@@ -14,11 +14,13 @@ class ExpenseRepo:
         doc_ref.set(data)
         return doc_ref.id
     
-    def get_expense_by_id(self, expense_id: str) -> dict[str, Any]:
-        doc_ref = self.col.document(expense_id)
-        doc = doc_ref.get()
-        return [doc.to_dict()]
-    
+    def get_expense_by_id(self, expense_id: list[str]) -> list[dict[str, Any]]:
+        docs = []
+        for id in expense_id:
+            doc_ref = self.col.document(id)
+            docs.append(doc_ref.get())
+        return [doc.to_dict() for doc in docs if doc.exists]
+
     # Needs to be fixed to align currency comparisons
     def get_expenses(
         self,
@@ -45,7 +47,7 @@ class ExpenseRepo:
             query = query.where("interval", "!=", None)
         if exclude_recurring:
             query = query.where("interval", "==", None)
-        query = query.order_by("occurred_at", "DESCENDING")
+        query = query.order_by("occurred_at", direction="DESCENDING")
         if count is not None:
             query = query.limit(count)
         docs = query.stream()

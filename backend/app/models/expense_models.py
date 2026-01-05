@@ -17,7 +17,7 @@ class ExpenseCreateRes(ExpenseCreateReq):
     created_at: datetime
 
 class ExpenseGetReq(BaseModel):
-    id: str | None = None
+    id: list[str] | None = None
     min_amount: int | None = None
     max_amount: int | None = None
     currency: list[Currency] | None = None
