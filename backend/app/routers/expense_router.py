@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from app.dependencies.services import get_expense_service
-from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, SubscriptionCreateReq, SubscriptionCreateRes, ExpenseGetReq
+from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, Subscription, SubscriptionCreateReq, SubscriptionCreateRes, ExpenseGetReq, SubscriptionGetReq
 from app.services.expense_service import ExpenseService
 
 
@@ -32,12 +32,12 @@ async def make_subscription(
 ):
     return await service.create_subscription(payload)
 
-@router.post("/get_subscription", response_model=SubscriptionCreateRes, status_code=200) #to be implemented
+@router.post("/get_subscription", response_model=list[Subscription], status_code=200) #to be implemented
 async def get_subscription(
-    payload: SubscriptionCreateReq,
+    payload: SubscriptionGetReq,
     service: Annotated[ExpenseService, Depends(get_expense_service)],
 ):
-    pass
+    return await service.get_subscription(payload)
 
 @router.post("/delete", status_code=204) #to be implemented
 async def delete_expense(
@@ -63,7 +63,8 @@ async def upload_expense_data(
 ):
     pass
     # return await service.upload_expense_data(payload)
-    
+
+#for updating expense data of subscriptions maybe
 @router.post("/update-data", status_code=200) #to be implemented
 async def update_expense_data(
     # payload: ExpenseDataUpdateReq,

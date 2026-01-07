@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Annotated, Optional
 from pydantic import BaseModel, Field, model_validator
 from pydantic_extra_types.currency_code import Currency
@@ -15,6 +15,13 @@ class ExpenseCreateReq(BaseModel):
 class ExpenseCreateRes(ExpenseCreateReq):
     id: str
     created_at: datetime
+
+class ExpenseDeleteReq(BaseModel):
+    id: list[str]
+
+class ExpenseDeleteRes(BaseModel):
+    id: str
+    deleted_at: datetime
 
 class ExpenseGetReq(BaseModel):
     id: list[str] | None = None
@@ -42,6 +49,7 @@ class ExpenseGetReq(BaseModel):
         return self
     
 class Expense(BaseModel):
+    id: str
     currency: Currency
     amount: Annotated[float, Field(strict=True, gt=0)]
     category: str
@@ -50,23 +58,41 @@ class Expense(BaseModel):
 
 class SubscriptionCreateReq(ExpenseCreateReq):
     interval: str
-    stop_after: Optional[datetime]
+    stop_after: datetime | None = None
 
 class SubscriptionCreateRes(SubscriptionCreateReq):
     id: str
     created_at: datetime
 
-class SubscriptionGetReq(BaseModel):
-    id: str
+class SubscriptionGetReq(ExpenseGetReq):
+    min_interval: str | None = None
+    max_interval: str | None = None
+    
+    @model_validator(mode="after")
+    def checkFilter(self):
+        other_filters = [
+            self.min_amount, self.max_amount, self.currency, 
+            self.category, self.occurred_on, self.occurred_before, 
+            self.occurred_after, self.recurring_only, 
+            self.exclude_recurring, self.count,
+            self.min_interval, self.max_interval
+        ]
+        if self.id and any(f is not None for f in other_filters):
+            raise ValueError("ID cannot be combined with other filters.")
+        return self
     
 class Subscription(BaseModel):
+    id: str
     currency: Currency
     amount: Annotated[float, Field(strict=True, gt=0)]
     category: str
     description: Optional[str]
     occurred_at: datetime
     interval: str
-    stop_after: Optional[datetime]
+    stop_after: datetime | None = None
 
-class SubscriptionGetRes(SubscriptionCreateRes):
-    pass
+class SubscriptionDeleteReq(BaseModel):
+    id: str
+
+class SubscriptionDeleteRes(Expense):
+    last_payment_date: datetime

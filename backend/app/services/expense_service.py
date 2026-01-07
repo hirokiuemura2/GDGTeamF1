@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, ExpenseGetReq, SubscriptionCreateReq, SubscriptionCreateRes
+from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, ExpenseDeleteRes, ExpenseGetReq, Subscription, SubscriptionCreateReq, SubscriptionCreateRes, SubscriptionGetReq
 from app.repo.expense_repo import ExpenseRepo
 from fastapi.concurrency import run_in_threadpool
 
@@ -24,8 +24,9 @@ class ExpenseService:
             **expense_dict,  # pyright: ignore[reportArgumentType]
         )
     
-    # async delete_expense(self, expense_id: str) -> None:
-    #     await run_in_threadpool(self.repo.delete_expense, expense_id)
+    async def delete_expense(self, expense_id: str) -> ExpenseDeleteRes:
+        id = await run_in_threadpool(self.repo.delete_expense, expense_id)
+        return ExpenseDeleteRes(id=id, deleted_at=datetime.now(timezone.utc))
 
     async def get_expense(self, payload: ExpenseGetReq) -> list[Expense]:
         if payload.id is not None and len(payload.id) > 0:
@@ -38,7 +39,7 @@ class ExpenseService:
             
         return [Expense(**data) for data in expense_data]  # pyright: ignore[reportArgumentType]
     
-    async def create_recurring_expense(self, payload: SubscriptionCreateReq) -> SubscriptionCreateRes:
+    async def create_subscription(self, payload: SubscriptionCreateReq) -> SubscriptionCreateRes:
         expense_dict = {
             "amount": payload.amount,
             "currency": payload.currency,
@@ -53,6 +54,21 @@ class ExpenseService:
             created_at=datetime.now(timezone.utc),
             **expense_dict,  # pyright: ignore[reportArgumentType]
         )
+
+    async def delete_subscription(self, subscription_id: str) -> ExpenseDeleteRes:
+        id = await run_in_threadpool(self.repo.delete_subscription, subscription_id)
+        return ExpenseDeleteRes(id=id, deleted_at=datetime.now(timezone.utc))
+    
+    async def get_subscription(self, payload: SubscriptionGetReq) -> list[Subscription]:
+        if payload.id is not None and len(payload.id) > 0:
+            subscription_data = await run_in_threadpool(self.repo.get_subscription_by_id, payload.id)
+        else:
+            if payload.occurred_on is not None:
+                payload.occurred_after = payload.occurred_on.replace(hour=0, minute=0, second=0, microsecond=0)
+                payload.occurred_before = payload.occurred_on.replace(hour=23, minute=59, second=59, microsecond=999999)
+            subscription_data = await run_in_threadpool(self.repo.get_subscription, **payload.model_dump(exclude={"id"}))
+        return [Subscription(**data) for data in subscription_data]  # pyright: ignore[reportArgumentType]
+    
     
     # async def delete_recurring_expense(self, expense_id: str) -> None:
     #     await run_in_threadpool(self.repo.delete_recurring_expense, expense_id)
