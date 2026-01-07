@@ -37,12 +37,9 @@ make build-dev dev
 make build-test test clean
 ```
 
-> [!HINT]
-> 
-> - If you don't want to build the image again, just remove the build flag and run the server mode you want.
-
 > [!NOTE]
 > 
+> - If you don't want to build the image again, just remove the build flag and run the server mode you want.
 > - If you what to access firestore emulator with a user interface, spin up server in dev mode and access `http://localhost:4000` through user browser.
 
 #### Production Mode
@@ -67,3 +64,11 @@ GCP_PROJECT_ID=<your-gcp-project-id>
 - `CURRENCY_API_KEY`: Visit [Free Currency API](https://app.freecurrencyapi.com/login) to get one
 - `JWT_AUTH_PRIVATE_KEY`: Run `openssl genrsa -out private-key.pem 2048` and copy the value in the `private-key.pem` file.
 - `JWT_AUTH_PUBLIC_KEY`: Run `openssl rsa -in private-key.pem -pubout -out public-key.pem.pub` and copy the value in the `public-key.pem.pub` file.
+
+> [!IMPORTANT]
+>
+> Ports that you will need for the development
+> - `localhost:8080`: backend server
+> - `localhost:8080/docs`: all the docs for the current API 
+> - `localhost:8000`: firestore database
+> - `localhost:4000`: firebase emulator UI
