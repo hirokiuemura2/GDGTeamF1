@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     currency_api_key: str
     gcp_project_id: str
+    google_client_id: str
+    google_client_secret: str
     jwt_auth_private_key: str
     jwt_auth_public_key: str
     jwt_auth_algorithm: str
