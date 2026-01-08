@@ -44,7 +44,6 @@ Example: add a feature to manage “categories”.
 
 1) Models (`models/category_models.py`)
 - Define request/response schemas with Pydantic.
-- Export in `models/__init__.py` for convenience imports.
 
 ```python
 # models/category_models.py
@@ -56,19 +55,6 @@ class CategoryCreate(BaseModel):
 
 class CategoryResponse(CategoryCreate):
     id: str
-```
-
-```python
-# models/__init__.py
-from .expense_models import ExpenseCreate, ExpenseResponse
-from .user_models import UserCreate, UserResponse
-from .category_models import CategoryCreate, CategoryResponse  # NEW
-
-__all__ = [
-    "ExpenseCreate", "ExpenseResponse",
-    "UserCreate", "UserResponse",
-    "CategoryCreate", "CategoryResponse",  # NEW
-]
 ```
 
 2) Repo (`repo/category_repo.py`)
@@ -90,13 +76,6 @@ class CategoryRepo:
         return doc_ref.id
 ```
 
-```python
-# repo/__init__.py
-from .expense_repo import ExpenseRepo
-from .category_repo import CategoryRepo  # NEW
-
-__all__ = ["ExpenseRepo", "CategoryRepo"]
-```
 
 3) Service (`services/category_service.py`)
 - Async boundary; use `run_in_threadpool` for repo calls.
@@ -119,13 +98,6 @@ class CategoryService:
         return CategoryResponse(id=cid, **data)
 ```
 
-```python
-# services/__init__.py
-from .currency_service import CurrencyService
-from .category_service import CategoryService  # NEW
-
-__all__ = ["CurrencyService", "CategoryService"]
-```
 
 4) Dependency wiring (`dependencies/services.py`)
 - Compose repo + service with DI providers.

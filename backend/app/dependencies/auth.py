@@ -33,18 +33,23 @@ def get_current_user_id(
     try:
         # autheticate and get data from payload
         payload = jwt.decode(
-            token, settings.jwt_auth_public_key, [settings.jwt_auth_algorithm]
+            token,
+            settings.jwt_auth_public_key,
+            [settings.jwt_auth_algorithm],
+            {"require": ["exp", "sub"]},
         )
 
         # RFC 7519: The "sub" (subject) claim identifies the principal that is the subject of the JWT
         user_id = payload.get("sub")
-
-        if user_id is None:
-            raise CredentialException()
-
-        # verify token id type
         token_data = TokenData(user_id=user_id)
-    except jwt.InvalidTokenError:
-        raise CredentialException()
+
+    except jwt.MissingRequiredClaimError as e:
+        raise CredentialException(f"{e}")
+
+    except jwt.ExpiredSignatureError as e:
+        raise CredentialException(f"{e}")
+
+    except jwt.InvalidTokenError as e:
+        raise CredentialException(f"{e}")
 
     return token_data.user_id
