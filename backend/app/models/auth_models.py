@@ -1,9 +1,9 @@
 from pydantic import BaseModel, EmailStr, SecretStr
 
 
-class Token(BaseModel):
+class Tokens(BaseModel):
     access_token: str
-    token_type: str
+    refresh_token: str
 
 
 class TokenData(BaseModel):
