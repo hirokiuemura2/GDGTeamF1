@@ -30,6 +30,7 @@ def settings_env(monkeypatch):
     monkeypatch.setenv("JWT_AUTH_PUBLIC_KEY", "dummy-public")
     monkeypatch.setenv("JWT_AUTH_ALGORITHM", "RS256")
     monkeypatch.setenv("JWT_AUTH_EXPIRES", "3600")
+    monkeypatch.setenv("JWT_REFRESH_EXPIRES", "20")
     yield
     config.get_settings.cache_clear()
 

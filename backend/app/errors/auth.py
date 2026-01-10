@@ -21,3 +21,9 @@ class LoginError(AuthError):
     @override
     def __str__(self):
         return "Password does not match the email entered!"
+
+
+class RefreshTokenVerificationError(AuthError):
+    @override
+    def __str__(self):
+        return "Token type mismatches!"
