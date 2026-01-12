@@ -12,9 +12,7 @@ APP_ENV = os.getenv("APP_ENV", "local")
 if APP_ENV not in {"local", "ci", "dev"}:
     load_env_from_secret_manager(
         secret_name="gdgteamf1-env",
-        project_id=os.environ["GCP_PROJECT_ID"],
-        google_client_id=os.environ["GOOGLE_CLIENT_ID"],
-        google_client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
+        project_id=os.environ["GCP_PROJECT_ID"]
     )
 
 app = FastAPI()
@@ -23,7 +21,7 @@ app.include_router(expense_router.router)
 app.include_router(auth_router.router)
 app.add_middleware(
     SessionMiddleware, 
-    secret_key=get_settings().google_client_secret,
+    secret_key=get_settings().GOOGLE_CLIENT_SECRET,
     max_age=3600
 )
 

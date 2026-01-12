@@ -82,7 +82,7 @@ async def google_oauth_login(
     oauth: Annotated[OAuth, Depends(get_oauth)],
     settings: Annotated[Settings, Depends(get_settings)],
 ):
-    baseURL = settings.base_url
+    baseURL = settings.BASE_URL
     return await oauth.google.authorize_redirect(request, redirect_uri=f"{baseURL}/auth/google/callback")
 
 @router.get("/google/sign-up")
@@ -91,7 +91,7 @@ async def google_oauth_sign_up(
     oauth: Annotated[OAuth, Depends(get_oauth)],
     settings: Annotated[Settings, Depends(get_settings)]
 ):
-    baseURL = settings.base_url
+    baseURL = settings.BASE_URL
     return await oauth.google.authorize_redirect(request, redirect_uri=f"{baseURL}/auth/google/sign-up-callback")
 
 @router.get("/google/delete-user")
@@ -100,7 +100,7 @@ async def delete_google_user(
     oauth: Annotated[OAuth, Depends(get_oauth)],
     settings: Annotated[Settings, Depends(get_settings)]
 ):
-    baseURL = settings.base_url
+    baseURL = settings.BASE_URL
     return await oauth.google.authorize_redirect(request, redirect_uri=f"{baseURL}/auth/google/delete-user-callback")
 
 @router.post("/google/delete-user/callback") # To be implemented
