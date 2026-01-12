@@ -14,9 +14,17 @@ class UserRepo:
         doc_ref.set(data)
         return doc_ref.id
 
+    def delete_user(self, user_id: str) -> None:
+        doc_ref = self.col.document(user_id)
+        doc_ref.delete()
+
     def get_user_by_email(self, email: EmailStr) -> list[DocumentSnapshot]:
         doc_query = self.col.where(filter=FieldFilter("email", "==", email))
         return list(doc_query.stream())
 
     def get_user_by_id(self, user_id: str):
         return self.col.document(user_id)
+    
+    def get_user_by_google_sub(self, google_sub: str) -> list[DocumentSnapshot]:
+        doc_query = self.col.where("google_sub", "==", google_sub)
+        return list(doc_query.stream())
