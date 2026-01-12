@@ -11,19 +11,22 @@ APP_ENV = os.getenv("APP_ENV", "local")
 
 if APP_ENV not in {"local", "ci", "dev"}:
     load_env_from_secret_manager(
-        secret_name="gdgteamf1-env",
-        project_id=os.environ["GCP_PROJECT_ID"]
+        secret_name="gdgteamf1-env", project_id=os.environ["GCP_PROJECT_ID"]
     )
 
 app = FastAPI()
+
+# Routers
 app.include_router(currency_router.router)
 app.include_router(expense_router.router)
 app.include_router(auth_router.router)
-app.add_middleware(
-    SessionMiddleware, 
-    secret_key=get_settings().google_client_secret,
-    max_age=3600
-)
+
+
+# Middleware
+# Avoid calling get_settings() at import time to keep tests import-safe.
+# Read the session secret directly from env with a safe default for local/tests.
+session_secret = os.getenv("GOOGLE_CLIENT_SECRET", "test-session-secret")
+app.add_middleware(SessionMiddleware, secret_key=session_secret, max_age=3600)
 
 
 @app.get("/healthcheck/")
