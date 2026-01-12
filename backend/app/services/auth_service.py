@@ -100,7 +100,3 @@ class AuthService:
             id=user_id,
             **user_dict,  # pyright: ignore[reportArgumentType]
         )
-
-    async def delete_google_user(self, payload: UserDeleteGoogleReq):
-        await run_in_threadpool(self.repo.delete_google_user, user.id)
-        pass

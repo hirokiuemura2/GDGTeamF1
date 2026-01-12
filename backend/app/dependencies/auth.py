@@ -13,8 +13,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 google_oauth = OAuth()
 google_oauth.register(
     name="google",
-    client_id=get_settings().GOOGLE_CLIENT_ID,
-    client_secret=get_settings().GOOGLE_CLIENT_SECRET,
+    client_id=get_settings().google_client_id,
+    client_secret=get_settings().google_client_secret,
     authorize_url="https://accounts.google.com/o/oauth2/auth",
     authorize_params={"scope": "openid email profile"},
     access_token_url="https://oauth2.googleapis.com/token",

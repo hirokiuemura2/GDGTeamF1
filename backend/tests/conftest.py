@@ -28,7 +28,7 @@ def settings_env(monkeypatch):
     monkeypatch.setenv("GCP_PROJECT_ID", "test-project")
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "dummy-google-client-id")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "dummy-google-client-secret")
-    monkeypatch.setenv("BASE_URL", "http://127.0.0.1:8000")
+    monkeypatch.setenv("BASE_URL", "http://127.0.0.1:8080")
     monkeypatch.setenv("JWT_AUTH_PRIVATE_KEY", "dummy-private")
     monkeypatch.setenv("JWT_AUTH_PUBLIC_KEY", "dummy-public")
     monkeypatch.setenv("JWT_AUTH_ALGORITHM", "RS256")

@@ -21,7 +21,7 @@ app.include_router(expense_router.router)
 app.include_router(auth_router.router)
 app.add_middleware(
     SessionMiddleware, 
-    secret_key=get_settings().GOOGLE_CLIENT_SECRET,
+    secret_key=get_settings().google_client_secret,
     max_age=3600
 )
 
