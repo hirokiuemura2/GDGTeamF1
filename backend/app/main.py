@@ -13,6 +13,8 @@ if APP_ENV not in {"local", "ci", "dev"}:
     load_env_from_secret_manager(
         secret_name="gdgteamf1-env",
         project_id=os.environ["GCP_PROJECT_ID"],
+        google_client_id=os.environ["GOOGLE_CLIENT_ID"],
+        google_client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
     )
 
 app = FastAPI()

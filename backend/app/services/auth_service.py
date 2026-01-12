@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.core.auth import get_password_hashed, verify_password
 from app.errors.auth import LoginError, UserExistsError, UserNotExistsError, GoogleUserNotExistsError
 from app.models.user_models import User, UserCreateReq, UserCreateRes, UserStatus, UserCreateGoogleReq, UserCreateGoogleRes
+from app.models.auth_models import Token
 from app.repo.user_repo import UserRepo
 
 
@@ -33,14 +34,15 @@ class AuthService:
         }
 
         user_id = await run_in_threadpool(self.repo.create_user, user_dict)
-        return UserCreateRes(
+        user = UserCreateRes(
             id=user_id,
             **user_dict,  # pyright: ignore[reportArgumentType]
         )
+        return user
 
-    async def delete_user(self, user: User, userid: int): #add models later
+    async def delete_user(self, user: User): #add models later
         await run_in_threadpool(self.repo.delete_user, user.id)
-        return {"detail": f"User {userid} deleted successfully."}
+        return {"detail": f"User {user.id} deleted successfully."}
 
     async def autheticate(self, payload: OAuth2PasswordRequestForm) -> User:
         user = self.repo.get_user_by_email(payload.username)
@@ -69,14 +71,14 @@ class AuthService:
         user = self.repo.get_user_by_google_sub(user_info['sub'])
         if len(user) == 0:
             raise GoogleUserNotExistsError()
-        
+        print(user_info)
         user = user[0]
         return User(
             id=user.id,
             first_name=user.get("first_name"),
             last_name=user.get("last_name"),
             status=user.get("status"),
-            email=user.get("email"),
+            google_sub = user.get("google_sub")
         )
         
     async def create_google_user(self, payload: UserCreateGoogleReq):
@@ -100,4 +102,5 @@ class AuthService:
         )
 
     async def delete_google_user(self, payload: UserDeleteGoogleReq):
+        await run_in_threadpool(self.repo.delete_google_user, user.id)
         pass

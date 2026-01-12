@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Annotated, Optional
 from pydantic import BaseModel, EmailStr, Field, SecretStr, model_validator
 from app.errors.auth import IdentifierNotProvidedError
+from app.models.auth_models import Token
 
 
 class UserStatus(Enum):
@@ -19,7 +20,7 @@ class User(BaseModel):
     email: Optional[EmailStr] = None
     google_sub: Optional[Annotated[str, Field(strict=True, min_length=1)]] = None
     
-    @model_validator(mode="before")
+    @model_validator(mode="after")
     def checkEmailOrGoogleSub(self):
         if not self.email and not self.google_sub:
             raise IdentifierNotProvidedError()
@@ -41,6 +42,7 @@ class UserCreateRes(UserCreateReq):
     id: str
     created_at: datetime
     updated_at: datetime
+    token: Optional[Token] = None
 
 class UserCreateGoogleRes(BaseModel):
     id: str
