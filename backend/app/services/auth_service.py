@@ -50,7 +50,11 @@ class AuthService:
         type: Literal["bearer", "refresh"],
     ):
         if expires is not None:
-            exp = timedelta(minutes=expires)
+            exp = (
+                timedelta(minutes=expires)
+                if type == "bearer"
+                else timedelta(days=expires)
+            )
             exp += datetime.now(timezone.utc)
         else:
             exp = timedelta(minutes=15) if type == "bearer" else timedelta(days=20)
@@ -202,4 +206,3 @@ class AuthService:
             id=user_id,
             **user_dict,  # pyright: ignore[reportArgumentType]
         )
-
