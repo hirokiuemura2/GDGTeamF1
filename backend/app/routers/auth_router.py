@@ -1,4 +1,3 @@
-from datetime import timedelta
 import traceback
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request
@@ -57,13 +56,6 @@ async def login(
         raise CredentialException(detail=f"{e}")
 
 
-@router.get("/login-check", status_code=201)
-async def create_expense(
-    userid: Annotated[str, Depends(get_current_user_id)],
-):
-    return {"status": "jwt token is correct"}
-
-
 @router.post("/refresh", response_model=Tokens, status_code=200)
 async def refresh(
     payload: Tokens,
@@ -90,20 +82,11 @@ async def refresh(
 async def sign_up(
     payload: UserCreateReq,
     service: Annotated[AuthService, Depends(get_auth_service)],
-    settings: Annotated[Settings, Depends(get_settings)],
 ) -> UserCreateRes:
     try:
         user = await service.create_user(payload)
     except AuthError as e:
         raise CredentialException(detail=f"{e}")
-    access_token = create_access_token(
-        {"sub": user.id},
-        timedelta(settings.jwt_auth_expires),
-        settings.jwt_auth_private_key,
-        settings.jwt_auth_algorithm,
-    )
-
-    user.token = Token(access_token=access_token, token_type="bearer")
     return user
 
 
@@ -114,7 +97,7 @@ async def delete_user(
     service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     try:
-        user = await service.autheticate(payload)
+        user = await service.authenticate_user(payload)
         if user.id != userid:
             raise CredentialException(detail="User ID mismatch.")
         confirmation = await service.delete_user(user)
@@ -177,13 +160,11 @@ async def google_oauth_callback(
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get("userinfo")
         user = await service.authenticate_google_user(user_info)
-        access_token = create_access_token(
-            {"sub": user.id},
-            timedelta(settings.jwt_auth_expires),
-            settings.jwt_auth_private_key,
-            settings.jwt_auth_algorithm,
+        return __create_tokens(
+            service,
+            user.id,
+            settings,
         )
-        return Token(access_token=access_token, token_type="bearer")
     except Exception as e:
         print("Error:", traceback.format_exc())
         return {"error": str(e)}
@@ -206,13 +187,11 @@ async def google_oauth_sign_up_callback(
                 google_sub=user_info["sub"],
             )
         )
-        access_token = create_access_token(
-            {"sub": user.id},
-            timedelta(settings.jwt_auth_expires),
-            settings.jwt_auth_private_key,
-            settings.jwt_auth_algorithm,
+        return __create_tokens(
+            service,
+            user.id,
+            settings,
         )
-        return Token(access_token=access_token, token_type="bearer")
     except Exception as e:
         print("Error:", traceback.format_exc())
         return {"error": str(e)}

@@ -9,10 +9,10 @@ from app.errors.http import CredentialException
 from app.models.auth_models import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+google_oauth = OAuth()
 
 
 def get_oauth(settings: Annotated[Settings, Depends(get_settings)]) -> OAuth:
-    google_oauth = OAuth()
     google_oauth.register(
         name="google",
         client_id=settings.google_client_id,
