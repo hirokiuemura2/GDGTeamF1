@@ -1,5 +1,4 @@
 import jwt
-
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any, Optional
 from fastapi import Depends
@@ -9,7 +8,6 @@ from pydantic import SecretStr
 from app.core import config
 
 _password_hash = PasswordHash.recommended()
-
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return _password_hash.verify(plain_password, hashed_password)
