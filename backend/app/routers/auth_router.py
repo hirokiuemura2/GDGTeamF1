@@ -55,6 +55,11 @@ async def login(
     except AuthError as e:
         raise CredentialException(detail=f"{e}")
 
+@router.get("/login-check", status_code=200)
+async def checkLogin(
+    settings: Annotated[Settings, Depends(get_settings)],
+):
+    return {"status":"You are logged in!"}
 
 @router.post("/refresh", response_model=Tokens, status_code=200)
 async def refresh(
