@@ -4,9 +4,15 @@ on:
     branches:
       - main
       - heaven
+    paths-ignore:
+      - "**/README.md"
+      - "READDME.md"
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - "**/README.md"
+      - "READDME.md"
 
 jobs:
   backend-ci:

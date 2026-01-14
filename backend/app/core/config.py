@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     jwt_auth_public_key: str
     jwt_auth_algorithm: str
     jwt_auth_expires: int
-    jwt_refresh_expires: int  # Added this to match your .env
+    jwt_refresh_expires: int
     model_config = SettingsConfigDict(env_file=".env")
 
 

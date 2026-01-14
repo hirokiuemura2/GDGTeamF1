@@ -6,3 +6,4 @@ key.json
 .cache
 private-key.pem
 public-key.pem.pub
+*http
