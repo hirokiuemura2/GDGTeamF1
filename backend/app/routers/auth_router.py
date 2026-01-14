@@ -57,7 +57,7 @@ async def login(
 
 @router.get("/login-check", status_code=200)
 async def checkLogin(
-    settings: Annotated[Settings, Depends(get_settings)],
+    settings: Annotated[Settings, Depends(get_current_user_id)],
 ):
     return {"status":"You are logged in!"}
 
