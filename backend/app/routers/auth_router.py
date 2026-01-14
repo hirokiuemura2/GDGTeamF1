@@ -1,66 +1,92 @@
-from datetime import timedelta
 import traceback
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from authlib.integrations.starlette_client import OAuth
-from app.core.auth import create_access_token
+
 from app.core.config import Settings, get_settings
 from app.dependencies.services import get_auth_service
 from app.dependencies.auth import get_current_user_id, get_oauth
 from app.errors.auth import AuthError
 from app.errors.http import CredentialException
-from app.models.auth_models import Token
+from app.models.auth_models import Tokens
 from app.models.user_models import UserCreateGoogleReq, UserCreateReq, UserCreateRes
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login")
+def __create_tokens(
+    service: AuthService,
+    user_id: str,
+    settings: Settings,
+) -> Tokens:
+    access_token = service.create_access_token(
+        {"sub": user_id},
+        settings.jwt_auth_expires,
+        settings.jwt_auth_private_key,
+        settings.jwt_auth_algorithm,
+    )
+    refresh_token = service.create_refresh_token(
+        {"sub": user_id},
+        settings.jwt_refresh_expires,
+        settings.jwt_auth_private_key,
+        settings.jwt_auth_algorithm,
+    )
+    return Tokens(
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
+
+
+@router.post("/login", response_model=Tokens, status_code=200)
 async def login(
     payload: Annotated[OAuth2PasswordRequestForm, Depends()],
     service: Annotated[AuthService, Depends(get_auth_service)],
     settings: Annotated[Settings, Depends(get_settings)],
-) -> Token:
+) -> Tokens:
     try:
-        user = await service.autheticate(payload)
-        access_token = create_access_token(
-            {"sub": user.id},
-            timedelta(settings.jwt_auth_expires),
-            settings.jwt_auth_private_key,
-            settings.jwt_auth_algorithm,
+        user = await service.authenticate_user(payload)
+        return __create_tokens(
+            service,
+            user.id,
+            settings,
         )
     except AuthError as e:
         raise CredentialException(detail=f"{e}")
-    return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/login-check", status_code=201)
-async def create_expense(
-    userid: Annotated[str, Depends(get_current_user_id)],
+@router.post("/refresh", response_model=Tokens, status_code=200)
+async def refresh(
+    payload: Tokens,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ):
-    return {"status": "jwt token is correct"}
+    try:
+        decoded = service.verify_refresh_token(
+            payload.refresh_token,
+            settings.jwt_auth_public_key,
+            settings.jwt_auth_algorithm,
+        )
+        return __create_tokens(
+            service,
+            decoded["sub"],
+            settings,
+        )
+
+    except AuthError as e:
+        raise CredentialException(f"{e}")
 
 
-@router.post("/sign-up")
+@router.post("/sign-up", response_model=UserCreateRes, status_code=201)
 async def sign_up(
     payload: UserCreateReq,
     service: Annotated[AuthService, Depends(get_auth_service)],
-    settings: Annotated[Settings, Depends(get_settings)],
 ) -> UserCreateRes:
     try:
         user = await service.create_user(payload)
     except AuthError as e:
         raise CredentialException(detail=f"{e}")
-    access_token = create_access_token(
-        {"sub": user.id},
-        timedelta(settings.jwt_auth_expires),
-        settings.jwt_auth_private_key,
-        settings.jwt_auth_algorithm,
-    )
-
-    user.token = Token(access_token=access_token, token_type="bearer")
     return user
 
 
@@ -71,7 +97,7 @@ async def delete_user(
     service: Annotated[AuthService, Depends(get_auth_service)],
 ):
     try:
-        user = await service.autheticate(payload)
+        user = await service.authenticate_user(payload)
         if user.id != userid:
             raise CredentialException(detail="User ID mismatch.")
         confirmation = await service.delete_user(user)
@@ -134,13 +160,11 @@ async def google_oauth_callback(
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get("userinfo")
         user = await service.authenticate_google_user(user_info)
-        access_token = create_access_token(
-            {"sub": user.id},
-            timedelta(settings.jwt_auth_expires),
-            settings.jwt_auth_private_key,
-            settings.jwt_auth_algorithm,
+        return __create_tokens(
+            service,
+            user.id,
+            settings,
         )
-        return Token(access_token=access_token, token_type="bearer")
     except Exception as e:
         print("Error:", traceback.format_exc())
         return {"error": str(e)}
@@ -163,14 +187,11 @@ async def google_oauth_sign_up_callback(
                 google_sub=user_info["sub"],
             )
         )
-        access_token = create_access_token(
-            {"sub": user.id},
-            timedelta(settings.jwt_auth_expires),
-            settings.jwt_auth_private_key,
-            settings.jwt_auth_algorithm,
+        return __create_tokens(
+            service,
+            user.id,
+            settings,
         )
-        return Token(access_token=access_token, token_type="bearer")
     except Exception as e:
         print("Error:", traceback.format_exc())
         return {"error": str(e)}
-
