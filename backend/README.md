@@ -178,6 +178,16 @@ This is a quick reference for **what each Google Cloud service does** in our bac
   - The app behaves unexpectedly
   - You need stack traces or runtime diagnostics
 
+### Secret Manager
+- Managing all the environment variables and API keys.
+- Check here if:
+  - You failed to spin up the backend server in the development mode after any `git pull` or `git pull --rebase`
+
+### Firestore
+- Production database
+- Check here if:
+  - You want to make sure that your database operations are working as expected.
+
 
 ## Quick Troubleshooting Guide
 
@@ -186,3 +196,4 @@ This is a quick reference for **what each Google Cloud service does** in our bac
 -  App crashed / misbehaving →  **Cloud Logging**
 -  Auth / permission issues →  **IAM**
 -  Login / OAuth issues →  **Google Auth Platform**
+-  Failed to spin up the backend server in development mode →  Download the latest .env file from **Secret Manager**
