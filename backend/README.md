@@ -110,3 +110,90 @@ Here is a short introduction to each environment variable used in production. Ho
   - The key used to verify a `JWT` token.
   - To get one, run `openssl rsa -in private-key.pem -pubout -out public-key.pem.pub` after you have created and saved your private key to `private-key.pem`.
 
+---
+
+## GCP Services Overview (Backend CI/CD & Runtime)
+
+This is a quick reference for **what each Google Cloud service does** in our backend pipeline and **where to look when something goes wrong**.
+
+---
+
+### IAM (Identity & Access Management)
+- Manages **service accounts, permissions, and Workload Identity Federation** (GitHub Actions → GCP, no static keys)
+- Used by: GitHub Actions, Cloud Build, Cloud Run
+- Check here if:
+  - CI/CD authentication fails
+  - You see `permission denied` or `unauthorized` errors
+  - Cloud Run / Cloud Build can’t access GCP resources  
+- Reference: https://community.inkdrop.app/d9dcf4a9124403cffb317313f835fe63/vvzRaor_
+
+
+### Google Auth Platform (Google OAuth)
+- Handles **user authentication via Google login** in the application
+- Check here if:
+  - Login fails
+  - OAuth redirects break
+  - Consent screen or callback errors occur
+
+
+### Cloud Build
+- Runs `docker build` remotely on Google Cloud
+- Builds container images from our Dockerfile
+- Check here if:
+  - Builds fail
+  - Dockerfile errors occur
+  - Images are not being produced
+
+
+### Cloud Storage
+- Stores **Cloud Build logs** (persistent build history)
+- Check here if:
+  - You need detailed build logs
+  - Cloud Build output is missing or truncated
+
+
+### Artifact Registry
+- Stores **built container images / artifacts** used by Cloud Run
+- Check here if:
+  - Cloud Run can’t find an image
+  - Image tags are wrong
+  - Deployments reference the wrong artifact
+
+
+### Cloud Run
+- Deploys and runs backend containers (fully managed, autoscaling)
+- Hosts the production backend service
+- Check here if:
+  - The service won’t start
+  - Containers crash on startup
+  - Runtime configuration is incorrect
+
+
+### Cloud Logging
+- Centralized logging for:
+  - Cloud Run (application logs)
+  - Cloud Build (build logs)
+  - System and runtime errors
+- Check here if:
+  - The app behaves unexpectedly
+  - You need stack traces or runtime diagnostics
+
+### Secret Manager
+- Managing all the environment variables and API keys.
+- Check here if:
+  - You failed to spin up the backend server in the development mode after any `git pull` or `git pull --rebase`
+
+### Firestore
+- Production database
+- Check here if:
+  - You want to make sure that your database operations are working as expected.
+
+
+## Quick Troubleshooting Guide
+
+-  Build failed →  **Cloud Build → Cloud Storage logs**
+-  Deploy failed →  **Cloud Run + Artifact Registry**
+-  App crashed / misbehaving →  **Cloud Logging**
+-  Auth / permission issues →  **IAM**
+-  Login / OAuth issues →  **Google Auth Platform**
+-  Failed to spin up the backend server in development mode →  Download the latest .env file from **Secret Manager**
