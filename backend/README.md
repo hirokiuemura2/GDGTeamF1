@@ -114,6 +114,8 @@ Here is a short introduction to each environment variable used in production. Ho
 
 ## GCP Services Overview (Backend CI/CD & Runtime)
 
+![architecture diagram](https://xhi163m504.ufs.sh/f/utOsHTLY1bFEUKM2sdtxuDIjdN3hbJ1t2PrYX0cZLQoVWw4K) 
+
 This is a quick reference for **what each Google Cloud service does** in our backend pipeline and **where to look when something goes wrong**.
 
 ---
