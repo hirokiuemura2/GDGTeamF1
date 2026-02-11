@@ -1,0 +1,16 @@
+HENRI PINNED ALL IMPORTANT MESSAGES IN DISCORD ( :-)
+
+
+project usually started with: npx expo run:android
+
+
+but in my WSL set up case start with:
+
+adb reverse tcp:8081 tcp:8081
+npx expo start --dev-client --host localhost
+
+
+
+changes to firewall to allow for port routing:
+
+New-NetFirewallRule -DisplayName "Expo Metro 8081" -Direction Inbound -LocalPort 8081 -Protocol TCP -Action Allow
