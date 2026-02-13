@@ -26,5 +26,5 @@ class UserRepo:
         return self.col.document(user_id)
     
     def get_user_by_google_sub(self, google_sub: str) -> list[DocumentSnapshot]:
-        doc_query = self.col.where("google_sub", "==", google_sub)
+        doc_query = self.col.where(filter=FieldFilter("google_sub", "==", google_sub))
         return list(doc_query.stream())

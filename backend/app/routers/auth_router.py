@@ -10,7 +10,7 @@ from app.dependencies.auth import get_current_user_id, get_oauth
 from app.errors.auth import AuthError
 from app.errors.http import CredentialException
 from app.models.auth_models import Tokens
-from app.models.user_models import UserCreateGoogleReq, UserCreateReq, UserCreateRes
+from app.models.user_models import UserCreateGoogleReq, UserCreateGoogleRes, UserCreateReq, UserCreateRes
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -87,13 +87,18 @@ async def refresh(
 async def sign_up(
     payload: UserCreateReq,
     service: Annotated[AuthService, Depends(get_auth_service)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> UserCreateRes:
     try:
         user = await service.create_user(payload)
+        user.token = __create_tokens(
+            service,
+            user.id,
+            settings,
+        )
     except AuthError as e:
         raise CredentialException(detail=f"{e}")
     return user
-
 
 @router.post("/delete-user")
 async def delete_user(
@@ -121,7 +126,6 @@ async def google_oauth_login(
         request, redirect_uri=f"{baseURL}auth/google/callback"
     )
 
-
 @router.get("/google/sign-up")
 async def google_oauth_sign_up(
     request: Request,
@@ -132,27 +136,21 @@ async def google_oauth_sign_up(
         request, redirect_uri=f"{baseURL}auth/google/sign-up-callback"
     )
 
-
-@router.get("/google/delete-user")
+@router.get("/google/delete-user")  # Implementation yet to be decided
 async def delete_google_user(
     request: Request,
-    oauth: Annotated[OAuth, Depends(get_oauth)],
-):
-    baseURL = str(request.base_url)
-    return await oauth.google.authorize_redirect(
-        request, redirect_uri=f"{baseURL}auth/google/delete-user-callback"
-    )
-
-
-@router.post("/google/delete-user/callback")  # To be implemented
-async def google_oauth_delete_user_callback(
-    request: Request,
     userid: Annotated[str, Depends(get_current_user_id)],
-    service: Annotated[AuthService, Depends(get_auth_service)],
     oauth: Annotated[OAuth, Depends(get_oauth)],
 ):
     pass
 
+@router.post("/google/delete-user-callback")  # Implementation yet to be decided
+async def google_oauth_delete_user_callback(
+    request: Request,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+    oauth: Annotated[OAuth, Depends(get_oauth)]
+):
+    pass
 
 @router.get("/google/callback")
 async def google_oauth_callback(
@@ -171,9 +169,7 @@ async def google_oauth_callback(
             settings,
         )
     except Exception as e:
-        print("Error:", traceback.format_exc())
         return {"error": str(e)}
-
 
 @router.get("/google/sign-up-callback")
 async def google_oauth_sign_up_callback(
@@ -181,7 +177,7 @@ async def google_oauth_sign_up_callback(
     service: Annotated[AuthService, Depends(get_auth_service)],
     oauth: Annotated[OAuth, Depends(get_oauth)],
     settings: Annotated[Settings, Depends(get_settings)],
-):
+ ) -> UserCreateGoogleRes:
     try:
         token = await oauth.google.authorize_access_token(request)
         user_info = token.get("userinfo")
@@ -192,11 +188,13 @@ async def google_oauth_sign_up_callback(
                 google_sub=user_info["sub"],
             )
         )
-        return __create_tokens(
+        user.token = __create_tokens(
             service,
             user.id,
             settings,
         )
+        return user
+    except AuthError as e:
+        raise CredentialException(detail=f"{e}")
     except Exception as e:
-        print("Error:", traceback.format_exc())
         return {"error": str(e)}

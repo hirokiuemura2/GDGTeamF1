@@ -177,7 +177,6 @@ class AuthService:
         user = self.repo.get_user_by_google_sub(user_info["sub"])
         if len(user) == 0:
             raise GoogleUserNotExistsError()
-        print(user_info)
         user = user[0]
         return User(
             id=user.id,
@@ -191,7 +190,6 @@ class AuthService:
         user = self.repo.get_user_by_google_sub(payload.google_sub)
         if len(user) != 0:
             raise UserExistsError()
-
         user_dict = {
             "first_name": payload.first_name,
             "last_name": payload.last_name,
@@ -206,3 +204,8 @@ class AuthService:
             id=user_id,
             **user_dict,  # pyright: ignore[reportArgumentType]
         )
+
+    async def delete_google_user(self, user: User):
+        # await run_in_threadpool(self.repo.delete_user, user.id)
+        # return {"detail": f"User {user.id} deleted successfully."}
+        pass

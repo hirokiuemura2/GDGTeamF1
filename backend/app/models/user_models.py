@@ -49,6 +49,9 @@ class UserCreateRes(UserCreateReq):
 
 class UserCreateGoogleRes(BaseModel):
     id: str
+    first_name: Annotated[str, Field(strict=True, min_length=1)]
+    last_name: Annotated[str, Field(strict=True, min_length=1)]
     created_at: datetime
     updated_at: datetime
+    token: Optional[Tokens] = None
 
