@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, ExpenseDeleteRes, ExpenseGetReq, Subscription, SubscriptionCreateReq, SubscriptionCreateRes, SubscriptionGetReq
+from app.models.expense_models import Expense, ExpenseCreateReq, ExpenseCreateRes, ExpenseDeleteReq, ExpenseDeleteRes, ExpenseGetReq, Subscription, SubscriptionCreateReq, SubscriptionCreateRes, SubscriptionDeleteReq, SubscriptionDeleteRes, SubscriptionGetReq
 from app.repo.expense_repo import ExpenseRepo
 from fastapi.concurrency import run_in_threadpool
 
@@ -24,8 +24,8 @@ class ExpenseService:
             **expense_dict,  # pyright: ignore[reportArgumentType]
         )
     
-    async def delete_expense(self, expense_id: str) -> ExpenseDeleteRes:
-        id = await run_in_threadpool(self.repo.delete_expense, expense_id)
+    async def delete_expense(self, payload: ExpenseDeleteReq) -> ExpenseDeleteRes:
+        id = await run_in_threadpool(self.repo.delete_expense, payload.id)
         return ExpenseDeleteRes(id=id, deleted_at=datetime.now(timezone.utc))
 
     async def get_expense(self, payload: ExpenseGetReq) -> list[Expense]:
@@ -47,6 +47,7 @@ class ExpenseService:
             "description": payload.description,
             "occurred_at": payload.occurred_at,
             "interval": payload.interval,
+            "last_recorded_payment": payload.last_recorded_payment if payload.last_recorded_payment is not None else payload.occurred_at
         }
         expense_id = await run_in_threadpool(self.repo.create_subscription, expense_dict)
         return SubscriptionCreateRes(
@@ -55,9 +56,9 @@ class ExpenseService:
             **expense_dict,  # pyright: ignore[reportArgumentType]
         )
 
-    async def delete_subscription(self, subscription_id: str) -> ExpenseDeleteRes:
-        id = await run_in_threadpool(self.repo.delete_subscription, subscription_id)
-        return ExpenseDeleteRes(id=id, deleted_at=datetime.now(timezone.utc))
+    async def delete_subscription(self, payload: SubscriptionDeleteReq) -> SubscriptionDeleteRes:
+        id, lastPayment = await run_in_threadpool(self.repo.delete_subscription, payload.id)
+        return SubscriptionDeleteRes(id=id, last_recorded_payment=lastPayment, deleted_at=datetime.now(timezone.utc))
     
     async def get_subscription(self, payload: SubscriptionGetReq) -> list[Subscription]:
         if payload.id is not None and len(payload.id) > 0:

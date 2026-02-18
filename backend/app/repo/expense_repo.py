@@ -14,10 +14,13 @@ class ExpenseRepo:
         doc_ref.set(data)
         return doc_ref.id
     
-    def delete_expense(self, expense_id: str):
-        doc_ref = self.col.document(expense_id)
-        doc_ref.delete()
-        return doc_ref.id
+    def delete_expense(self, expense_id: list[str]):
+        deleted_id = []
+        for id in expense_id:
+            doc_ref = self.col.document(id)
+            doc_ref.delete()
+            deleted_id.append(id)
+        return deleted_id   #might expand to show nonexistent ids later
     
     def get_expense_by_id(self, expense_id: list[str]) -> list[dict[str, Any]]:
         docs = []
@@ -34,6 +37,7 @@ class ExpenseRepo:
         category: list[str] | None = None,
         occurred_before: datetime | None = None, occurred_after: datetime | None = None,
         recurring_only: bool | None = None, exclude_recurring: bool | None = None,
+        subscription_id: str | None = None,
         count: int | None = None,
         ) -> list[dict[str, Any]]:
         query = self.col
@@ -51,6 +55,8 @@ class ExpenseRepo:
             query = query.where("occurred_at", ">=", occurred_after)
         if recurring_only:
             query = query.where("interval", "!=", None)
+            if subscription_id is not None:
+                query = query.where("subscription_id", "==", subscription_id)
         if exclude_recurring:
             query = query.where("interval", "==", None)
         query = query.order_by("occurred_at", direction="DESCENDING")
@@ -67,8 +73,10 @@ class ExpenseRepo:
 
     def delete_subscription(self, subscription_id: str):
         doc_ref = self.recCol.document(subscription_id)
+        doc = doc_ref.get()
+        lastDate = doc.to_dict().get("last_recorded_payment")
         doc_ref.delete()
-        return doc_ref.id
+        return doc_ref.id, lastDate
 
     def get_subscription_by_id(self, subscription_id: list[str]) -> list[dict[str, Any]]:
         docs = []
@@ -81,7 +89,6 @@ class ExpenseRepo:
         min_amount: int | None = None, max_amount: int | None = None, currency: list[str] | None = None,
         category: list[str] | None = None,
         occurred_before: datetime | None = None, occurred_after: datetime | None = None,
-        recurring_only: bool | None = None, exclude_recurring: bool | None = None,
         count: int | None = None, min_interval: str | None = None, max_interval: str | None = None,
         ):
         query = self.recCol.stream()
@@ -97,10 +104,6 @@ class ExpenseRepo:
             query = query.where("occurred_at", "<=", occurred_before)
         if occurred_after is not None:
             query = query.where("occurred_at", ">=", occurred_after)
-        if recurring_only:
-            query = query.where("interval", "!=", None)
-        if exclude_recurring:
-            query = query.where("interval", "==", None)
         if min_interval is not None:
             query = query.where("interval", ">=", min_interval)
         if max_interval is not None:
