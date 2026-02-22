@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     gcp_project_id: str
     google_client_id: str
     google_client_secret: str
+    gemini_api_key: str
     base_url: str
     jwt_auth_private_key: str
     jwt_auth_public_key: str
