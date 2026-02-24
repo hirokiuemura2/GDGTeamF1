@@ -1,16 +1,17 @@
-import { View, Text, TextInput, StyleSheet, Pressable, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
+import authService from "@/lib/services/authService";
 import { router } from "expo-router";
 import { useState } from "react";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function Login() {
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleLogin = async () => {
         // Validate inputs
-        if (!email.trim() || !password.trim()) {
-            Alert.alert("Error", "Email and password are required");
+        if (!username.trim() || !password.trim()) {
+            Alert.alert("Error", "Username and password are required");
             return;
         }
 
@@ -18,7 +19,7 @@ export default function Login() {
 
         try {
             const loginData = {
-                email: email,
+                username: username,
                 password: password
             };
 
@@ -50,13 +51,12 @@ export default function Login() {
 
                 <View style={styles.formContainer}>
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Email</Text>
+                        <Text style={styles.label}>Username</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Enter your email"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
+                            placeholder="Enter your username"
+                            value={username}
+                            onChangeText={setUsername}
                             autoCapitalize="none"
                             autoCorrect={false}
                         />
@@ -90,7 +90,7 @@ export default function Login() {
                         onPress={() => router.replace('/(auth)/signup')}
                     >
                         <Text style={styles.signupLinkText}>
-                            Don't have an account? <Text style={styles.signupLinkBold}>Sign Up</Text>
+                            Don&apos;t have an account? <Text style={styles.signupLinkBold}>Sign Up</Text>
                         </Text>
                     </Pressable>
                 </View>

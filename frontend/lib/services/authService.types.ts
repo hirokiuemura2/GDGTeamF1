@@ -5,4 +5,7 @@ export interface newUser {
     "password": string
 }
 
-
+export interface user {
+    "username": string,
+    "password": string
+}
