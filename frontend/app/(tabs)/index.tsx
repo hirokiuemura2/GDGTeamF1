@@ -1,6 +1,8 @@
-import { FlatList, KeyboardAvoidingView, StyleSheet, Text, View } from "react-native";
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-
+// Mock data
 const CATEGORY = [
   { id: 1, title: 'Transport', amount: 'Total' },
   { id: 2, title: 'Food', amount: 'Total' },
@@ -9,31 +11,61 @@ const CATEGORY = [
   { id: 5, title: 'Health', amount: 'Total' },
 ]
 
-const Item = ({title, amount}: {title: string, amount: string}) => (
-  <View style={styles.item}>
-    <Text>{title}</Text>
-    <Text>{amount}</Text>
-  </View>
+// Components // Might be wise to move to a different file altogether
+const Item = ({ title, amount, expose }: { title: string, amount: string, expose: boolean }) => (
+  <Pressable
+    onPress={() => { if (!expose) { console.log("child pressed") } }}
+  >
+    <View
+      style={styles.item}>
+      {expose &&
+        <Pressable
+          style={styles.removeButton}
+          onPress={() => console.log("remove pressed")}>
+          <Ionicons name="remove-circle" size={30} color="#a90000c1" />
+        </Pressable>
+      }
+      <Text>{title}</Text>
+      <Text>{amount}</Text>
+    </View>
+  </Pressable>
 )
 
 export default function Index() {
+  // States
+  const [exposeMenu, setExposeMenu] = useState(false)
+
   return (
-    <KeyboardAvoidingView style={styles.container}>
-      <FlatList data={CATEGORY}
-      renderItem={({item}) => <Item title={item.title} amount={item.amount}/>}
-      keyExtractor={item => item.id.toString()}
-      numColumns={3}
-      columnWrapperStyle={styles.row}
-      />
-    </KeyboardAvoidingView >
+    <Pressable
+      style={styles.container}
+      onLongPress={() => {
+        console.log("parent press")
+        setExposeMenu(prev => !prev)
+      }}
+    >
+      <View>
+        <FlatList data={CATEGORY}
+          renderItem={({ item }) => <Item title={item.title} amount={item.amount} expose={exposeMenu} />}
+          keyExtractor={item => item.id.toString()}
+          numColumns={3}
+          columnWrapperStyle={styles.row}
+        />
+      </View>
+
+      <Pressable
+        style={styles.addButton}
+        onPress={() => console.log("add press")}>
+        <Ionicons name="add-circle-sharp" size={60} color="#6495ed" />
+      </Pressable>
+    </Pressable>
   )
 }
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: "center",
     backgroundColor: "#ffffff",
-    paddingVertical: 50,
+    paddingVertical: 20,
+    flex: 1,
   },
   row: {
     marginBottom: 10,
@@ -51,7 +83,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#6495ed",
 
   },
-  title: {
-
+  removeButton: {
+    position: "absolute",
+    top: 0,
+    right: 0
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
   }
 })
