@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Pressable } from "react-native";
-import { router } from "expo-router";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Settings() {
     return (
