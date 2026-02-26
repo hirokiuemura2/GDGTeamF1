@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+
 
 // Mock data
 const CATEGORY = [
@@ -10,9 +11,8 @@ const CATEGORY = [
   { id: 4, title: 'Housing', amount: 'Total' },
   { id: 5, title: 'Health', amount: 'Total' },
 ]
-
 // Components // Might be wise to move to a different file altogether
-const Item = ({ title, amount, expose }: { title: string, amount: string, expose: boolean }) => (
+const Item = ({ id, title, amount, expose, handleDeleteCategory }: { id: number, title: string, amount: string, expose: boolean, handleDeleteCategory: (id: number) => void}) => (
   <Pressable
     onPress={() => { if (!expose) { console.log("child pressed") } }}
   >
@@ -21,7 +21,9 @@ const Item = ({ title, amount, expose }: { title: string, amount: string, expose
       {expose &&
         <Pressable
           style={styles.removeButton}
-          onPress={() => console.log("remove pressed")}>
+          onPress={() => handleDeleteCategory(id)
+            
+          }>
           <Ionicons name="remove-circle" size={30} color="#a90000c1" />
         </Pressable>
       }
@@ -33,7 +35,28 @@ const Item = ({ title, amount, expose }: { title: string, amount: string, expose
 
 export default function Index() {
   // States
+  const [categories, setCategories] = useState(CATEGORY)
   const [exposeMenu, setExposeMenu] = useState(false)
+  const [modalVisible, setModal] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
+
+  // Helper functions
+  const handleCreateCategory = () => {
+    if (!newCategoryName.trim()) return
+    console.log("New category:", newCategoryName)
+    setCategories(prev => [...prev, {
+      id: prev.length > 0 ? prev[prev.length - 1].id + 1 : 1,
+      title: newCategoryName,
+      amount: 'Total'
+    }])
+    setNewCategoryName("")
+    setModal(false)
+  }
+  
+  const handleDeleteCategory = (id: number) => {
+    console.log("Category with id deleted: ", id,)
+    setCategories(prev => prev.filter(category => category.id !== id))
+  }
 
   return (
     <Pressable
@@ -44,17 +67,43 @@ export default function Index() {
       }}
     >
       <View>
-        <FlatList data={CATEGORY}
-          renderItem={({ item }) => <Item title={item.title} amount={item.amount} expose={exposeMenu} />}
+        <FlatList data={categories}
+          renderItem={({ item }) => <Item id={item.id} title={item.title} amount={item.amount} expose={exposeMenu} handleDeleteCategory={handleDeleteCategory} />}
           keyExtractor={item => item.id.toString()}
           numColumns={3}
           columnWrapperStyle={styles.row}
         />
       </View>
 
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+      >
+        <Pressable
+          onPress={() => setModal(false)}
+          style={styles.modalOverlay}>
+          <Pressable style={styles.modalContent} onPress={() => {}}>
+            <Text style={styles.modalTitle}>New Category</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Category name"
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              autoFocus
+            />
+            <Pressable
+              style={styles.submitButton}
+              onPress={handleCreateCategory}
+            >
+              <Text style={styles.submitButtonText}>Create</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <Pressable
         style={styles.addButton}
-        onPress={() => console.log("add press")}>
+        onPress={() => setModal(prev => !prev)}>
         <Ionicons name="add-circle-sharp" size={60} color="#6495ed" />
       </Pressable>
     </Pressable>
@@ -91,5 +140,41 @@ const styles = StyleSheet.create({
   addButton: {
     position: "absolute",
     bottom: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)", // Dim background
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#ffffff",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#d0d0d0",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: "#6495ed",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  submitButtonText: {
+    color: "#ffffff",
+    fontWeight: "600",
+    fontSize: 16,
   }
 })
