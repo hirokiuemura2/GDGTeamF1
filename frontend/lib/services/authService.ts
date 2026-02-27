@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store'
-import { NewUser, User } from './authService.types'
+import { NewUser, User } from '../types/authService.types'
 
 
 const baseURL = 'https://fin-app-backend-526024683416.asia-northeast1.run.app/'
