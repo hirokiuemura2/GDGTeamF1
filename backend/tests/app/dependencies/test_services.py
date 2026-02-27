@@ -1,14 +1,11 @@
-def test_get_expense_service_constructs_with_deps(firestore_db):
+def test_get_transaction_services_construct_with_deps(firestore_db):
     from app.dependencies import services as svc_dep
-    from app.services.expense_service import ExpenseService
+    from app.services.transaction_service import TransactionService
 
-    # Use real dependencies with the test Firestore client
-    svc = svc_dep.get_expense_service(db=firestore_db, user_id="test-user")
+    transaction_svc = svc_dep.get_transaction_service(
+        db=firestore_db, user_id="test-user"
+    )
 
-    # Verify we get a real ExpenseService instance
-    assert isinstance(svc, ExpenseService)
+    assert isinstance(transaction_svc, TransactionService)
 
-    # Verify the service is functional by checking its repo
-    assert svc.repo is not None
-    assert svc.repo.col is not None
-
+    assert transaction_svc.repo is not None

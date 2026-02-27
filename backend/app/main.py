@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 
 from app.core.env_boostrap import load_env_from_secret_manager
-from app.routers import auth_router, currency_router, expense_router
+from app.routers import auth_router, currency_router, transaction_router
 import os
 
 from starlette.middleware.sessions import SessionMiddleware
-from app.core.config import get_settings
 
 APP_ENV = os.getenv("APP_ENV", "local")
 
@@ -18,7 +17,7 @@ app = FastAPI()
 
 # Routers
 app.include_router(currency_router.router)
-app.include_router(expense_router.router)
+app.include_router(transaction_router.router)
 app.include_router(auth_router.router)
 
 

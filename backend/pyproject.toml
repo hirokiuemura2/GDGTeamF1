@@ -27,6 +27,7 @@ dependencies = [
     "matplotlib-inline==0.1.7",
     "nest-asyncio==1.6.0",
     "packaging==24.1",
+    "pandas>=3.0.1",
     "parso==0.8.4",
     "pexpect==4.9.0",
     "platformdirs==4.3.2",
