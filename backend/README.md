@@ -127,7 +127,7 @@ This is a quick reference for **what each Google Cloud service does** in our bac
   - CI/CD authentication fails
   - You see `permission denied` or `unauthorized` errors
   - Cloud Run / Cloud Build can’t access GCP resources  
-- Reference: https://community.inkdrop.app/d9dcf4a9124403cffb317313f835fe63/vvzRaor\_
+- Reference: [OIDC and GCP](https://community.inkdrop.app/d9dcf4a9124403cffb317313f835fe63/vvzRaor_)
 
 
 ### Google Auth Platform (Google OAuth)
