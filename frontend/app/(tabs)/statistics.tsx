@@ -1,8 +1,8 @@
-import { View, Text } from "react-native";
+import { Text, View } from "react-native";
 
 export default function Statistics() {
     return (
-            <View
+      <View
       style={{
         flex: 1,
         justifyContent: "center",

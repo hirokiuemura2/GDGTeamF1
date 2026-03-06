@@ -1,12 +1,12 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from "expo-router";
 import React from "react";
-import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function TabsLayout() {
   return (
     <Tabs>
       <Tabs.Screen name="index" options={{
-        title:"Home",
+        title: "Home",
         tabBarIcon: ({ color, size }) => (
           <Ionicons name="home-outline" size={size} color={color} />
         )
