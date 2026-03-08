@@ -13,7 +13,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Category, Transaction } from '../../lib/types/transaction.types';
+import apiClient from '../../lib/services/apiClient';
+import { Category, Transaction, TransactionType } from '../../lib/types/transaction.types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -22,11 +23,9 @@ const PAGE_SIZE = 6;
 const MAX_RECENT = 10;
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Upper half is ~2/5 of screen. Subtract: summaryBar (44px), dotsRow (28px), paddingTop (12px)
 const UPPER_HALF_HEIGHT = SCREEN_HEIGHT * 0.4 - 44 - 28 - 12;
 const TILE_GAP = 6;
-// Tile must fit 3 across (width) and 2 tall (height) — pick the smaller to keep it square
-const TILE_FROM_WIDTH = (SCREEN_WIDTH - 24 - TILE_GAP * 2) / 3;  // 12px horizontal padding each side
+const TILE_FROM_WIDTH = (SCREEN_WIDTH - 24 - TILE_GAP * 2) / 3;
 const TILE_FROM_HEIGHT = (UPPER_HALF_HEIGHT - TILE_GAP) / 2;
 const TILE_SIZE = Math.floor(Math.min(TILE_FROM_WIDTH, TILE_FROM_HEIGHT));
 
@@ -38,10 +37,6 @@ const INITIAL_CATEGORIES: Category[] = [
   { id: 3, title: 'Shopping', amount: 0 },
   { id: 4, title: 'Housing', amount: 0 },
   { id: 5, title: 'Health', amount: 0 },
-];
-
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: 1, currency: 'USD', amount: 100, category: 'Food', description: 'Ate at McDonalds', occurred_at: new Date().toISOString() },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -91,7 +86,10 @@ export default function Index() {
   const router = useRouter();
 
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // NOTE: When GET /transactions is ready, replace the empty array above with
+  // a useEffect that calls apiClient.getTransactions() and sets state on mount.
+
   const [exposeMenu, setExposeMenu] = useState(false);
 
   const [categoryPage, setCategoryPage] = useState(0);
@@ -104,17 +102,25 @@ export default function Index() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [newAmount, setNewAmount] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [selectedCurrency, setSelectedCurrency] = useState("JPY");
   const [currencyDropdownVisible, setCurrencyDropdownVisible] = useState(false);
+
+  const [selectedTransactionType, setSelectedTransactionType] = useState<TransactionType>('expense');
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  const totalSpending = transactions.reduce((sum, t) => sum + t.amount, 0);
-  const totalIncome = 0;
+  const totalSpending = transactions
+    .filter(t => t.transaction_type === 'expense' || t.transaction_type === 'subscription')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalIncome = transactions
+    .filter(t => t.transaction_type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   const categoryTransactions = transactions
     .filter(t => t.category === selectedCategory?.title)
@@ -134,7 +140,8 @@ export default function Index() {
     setSelectedCategory(category);
     setNewAmount("");
     setNewDescription("");
-    setSelectedCurrency("USD");
+    setSelectedCurrency("JPY");
+    setSelectedTransactionType('expense');
     setSelectedDate(new Date());
     setCurrencyDropdownVisible(false);
     setDatePickerVisible(false);
@@ -162,27 +169,69 @@ export default function Index() {
     setCategories(prev => prev.filter(c => c.id !== id));
   };
 
-  const handleAddTransaction = () => {
+  const handleAddTransaction = async () => {
     const parsedAmount = parseFloat(newAmount);
     if (!newAmount.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
     if (!selectedCategory) return;
+    if (isSubmitting) return;
 
-    const newTransaction: Transaction = {
-      id: transactions.length > 0 ? transactions[transactions.length - 1].id + 1 : 1,
+    // Build the local transaction for optimistic UI.
+    // Uses a temporary negative id to distinguish from real API ids.
+    const tempId = -Date.now();
+    const optimisticTransaction: Transaction = {
+      id: tempId,
       currency: selectedCurrency,
       amount: parsedAmount,
+      transaction_type: selectedTransactionType,
       category: selectedCategory.title,
-      description: newDescription,
+      description: newDescription || null,
+      business_name: null,
+      payment_method: null,
+      exchange_rate: null,
       occurred_at: selectedDate.toISOString(),
     };
 
-    setTransactions(prev => [...prev, newTransaction]);
+    // ── OPTIMISTIC UPDATE ──────────────────────────────────────────────────
+    // Adds to local state immediately so the UI feels instant.
+    // TO SWITCH TO SUCCESS-ONLY: remove these two setX calls and move them
+    // into the try block below, replacing tempId with apiTransaction.id.
+    setTransactions(prev => [...prev, optimisticTransaction]);
     setCategories(prev => prev.map(c =>
       c.id === selectedCategory.id ? { ...c, amount: c.amount + parsedAmount } : c
     ));
+    // ── END OPTIMISTIC UPDATE ──────────────────────────────────────────────
+
     setNewAmount("");
     setNewDescription("");
     setSelectedDate(new Date());
+    setIsSubmitting(true);
+
+    try {
+      await apiClient.postTransaction({
+        amount: parsedAmount,
+        exchange_rate: null,
+        currency: selectedCurrency,
+        transaction_type: selectedTransactionType,
+        category: selectedCategory.title,
+        description: newDescription || null,
+        business_name: null,
+        payment_method: null,
+      });
+
+      // TO SWITCH TO SUCCESS-ONLY: move setTransactions and setCategories here,
+      // using the real id from the API response instead of tempId.
+
+    } catch (error) {
+      console.error('Failed to post transaction:', error);
+
+      // Revert optimistic update on failure
+      setTransactions(prev => prev.filter(t => t.id !== tempId));
+      setCategories(prev => prev.map(c =>
+        c.id === selectedCategory.id ? { ...c, amount: c.amount - parsedAmount } : c
+      ));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ── Transaction feed renderer ───────────────────────────────────────────────
@@ -209,14 +258,22 @@ export default function Index() {
 
       items.push(
         <View key={t.id} style={styles.transactionRow}>
-          <View style={styles.categoryDot} />
+          <View style={[
+            styles.categoryDot,
+            t.transaction_type === 'income' && { backgroundColor: '#22c55e' },
+            t.transaction_type === 'subscription' && { backgroundColor: '#6495ed' },
+          ]} />
           <View style={{ flex: 1 }}>
             <Text style={styles.transactionDesc} numberOfLines={1}>
               {t.description || '—'}
             </Text>
             <Text style={styles.transactionCat}>{t.category}</Text>
           </View>
-          <Text style={styles.transactionAmount}>
+          <Text style={[
+            styles.transactionAmount,
+            t.transaction_type === 'income' && { color: '#22c55e' },
+            t.transaction_type === 'subscription' && { color: '#6495ed' },
+          ]}>
             {t.currency} {t.amount.toFixed(2)}
           </Text>
         </View>
@@ -300,7 +357,7 @@ export default function Index() {
           })}
         </ScrollView>
 
-        {/* Page indicator dots — always reserve space so layout is stable */}
+        {/* Page indicator dots */}
         <View style={styles.dotsRow}>
           {totalPages > 1 && Array.from({ length: totalPages }).map((_, i) => (
             <Pressable
@@ -347,6 +404,7 @@ export default function Index() {
               </Pressable>
             </View>
 
+            {/* Amount + Currency row */}
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.traInput, { flex: 1 }]}
@@ -355,11 +413,17 @@ export default function Index() {
                 value={newAmount}
                 onChangeText={setNewAmount}
                 keyboardType="decimal-pad"
-                onFocus={() => { setCurrencyDropdownVisible(false); setDatePickerVisible(false); }}
+                onFocus={() => {
+                  setCurrencyDropdownVisible(false);
+                  setDatePickerVisible(false);
+                }}
               />
               <Pressable
                 style={styles.currencyButton}
-                onPress={() => { setCurrencyDropdownVisible(prev => !prev); setDatePickerVisible(false); }}
+                onPress={() => {
+                  setCurrencyDropdownVisible(prev => !prev);
+                  setDatePickerVisible(false);
+                }}
               >
                 <Text style={styles.currencyButtonText}>{selectedCurrency}</Text>
                 <Ionicons name="chevron-down" size={14} color="#fff" />
@@ -384,6 +448,7 @@ export default function Index() {
               </View>
             )}
 
+            {/* Description + Date row */}
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.traInput, { flex: 1 }]}
@@ -391,11 +456,17 @@ export default function Index() {
                 placeholderTextColor="#aaa"
                 value={newDescription}
                 onChangeText={setNewDescription}
-                onFocus={() => { setCurrencyDropdownVisible(false); setDatePickerVisible(false); }}
+                onFocus={() => {
+                  setCurrencyDropdownVisible(false);
+                  setDatePickerVisible(false);
+                }}
               />
               <Pressable
                 style={styles.dateButton}
-                onPress={() => { setDatePickerVisible(prev => !prev); setCurrencyDropdownVisible(false); }}
+                onPress={() => {
+                  setDatePickerVisible(prev => !prev);
+                  setCurrencyDropdownVisible(false);
+                }}
               >
                 <Ionicons name="calendar-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
                 <Text style={styles.dateButtonText}>{formatDate(selectedDate)}</Text>
@@ -416,8 +487,39 @@ export default function Index() {
               />
             )}
 
-            <Pressable style={styles.submitTraButton} onPress={handleAddTransaction}>
-              <Text style={styles.submitTraButtonText}>Add expense</Text>
+            {/* Transaction type — 3-button row */}
+            <View style={styles.typeButtonRow}>
+              {/* Income */}
+              <Pressable
+                style={[styles.typeBtn, selectedTransactionType === 'income' && styles.typeBtnActiveIncome]}
+                onPress={() => setSelectedTransactionType('income')}
+              >
+                <Ionicons name="caret-up" size={22} color="#22c55e" />
+              </Pressable>
+              {/* Expense */}
+              <Pressable
+                style={[styles.typeBtn, selectedTransactionType === 'expense' && styles.typeBtnActiveExpense]}
+                onPress={() => setSelectedTransactionType('expense')}
+              >
+                <Ionicons name="caret-down" size={22} color="#ef4444" />
+              </Pressable>
+              {/* Subscription */}
+              <Pressable
+                style={[styles.typeBtn, selectedTransactionType === 'subscription' && styles.typeBtnActiveSubscription]}
+                onPress={() => setSelectedTransactionType('subscription')}
+              >
+                <Ionicons name="refresh" size={22} color="#6495ed" />
+              </Pressable>
+            </View>
+
+            <Pressable
+              style={[styles.submitTraButton, isSubmitting && { opacity: 0.6 }]}
+              onPress={handleAddTransaction}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.submitTraButtonText}>
+                {isSubmitting ? 'Adding...' : 'Add'}
+              </Text>
             </Pressable>
 
             <Text style={styles.pastExpensesLabel}>Past expenses</Text>
@@ -426,12 +528,22 @@ export default function Index() {
                 ? <Text style={styles.noExpensesText}>No expenses yet</Text>
                 : categoryTransactions.map(t => (
                   <View key={t.id} style={styles.transactionRow}>
-                    <View style={styles.categoryDot} />
+                    <View style={[
+                      styles.categoryDot,
+                      t.transaction_type === 'income' && { backgroundColor: '#22c55e' },
+                      t.transaction_type === 'subscription' && { backgroundColor: '#6495ed' },
+                    ]} />
                     <View style={{ flex: 1, marginRight: 8 }}>
                       <Text style={styles.transactionDesc}>{t.description || '—'}</Text>
                       <Text style={styles.transactionCat}>{formatDate(new Date(t.occurred_at))}</Text>
                     </View>
-                    <Text style={styles.transactionAmount}>{t.currency} {t.amount.toFixed(2)}</Text>
+                    <Text style={[
+                      styles.transactionAmount,
+                      t.transaction_type === 'income' && { color: '#22c55e' },
+                      t.transaction_type === 'subscription' && { color: '#6495ed' },
+                    ]}>
+                      {t.currency} {t.amount.toFixed(2)}
+                    </Text>
                   </View>
                 ))
               }
@@ -477,7 +589,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
 
-  // Upper half — fixed at ~2/5 screen height, never scrolls vertically
   upperHalf: {
     height: SCREEN_HEIGHT * 0.4,
     paddingTop: 12,
@@ -509,10 +620,9 @@ const styles = StyleSheet.create({
   categoryPage: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 12,
     gap: TILE_GAP,
-    alignContent: 'center',   // vertically center the 3 rows within available space
-    justifyContent: 'flex-start',
+    alignContent: 'center',
+    justifyContent: 'center',
   },
   tile: {
     width: TILE_SIZE,
@@ -542,7 +652,6 @@ const styles = StyleSheet.create({
     top: 4,
     right: 4,
   },
-  // Always reserve dotsRow height so layout never shifts
   dotsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -560,7 +669,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#6495ed',
   },
 
-  // Lower half
   lowerHalf: {
     flex: 1,
     paddingHorizontal: 16,
@@ -600,7 +708,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#6495ed',
+    backgroundColor: '#ef4444',
     flexShrink: 0,
   },
   transactionDesc: {
@@ -640,7 +748,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // Transaction modal
   modalTraOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -737,6 +844,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
   },
+  typeButtonRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  typeBtn: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typeBtnActiveIncome: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#22c55e',
+  },
+  typeBtnActiveExpense: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#ef4444',
+  },
+  typeBtnActiveSubscription: {
+    backgroundColor: '#e8effe',
+    borderColor: '#6495ed',
+  },
   submitTraButton: {
     backgroundColor: '#6495ed',
     padding: 12,
@@ -760,7 +894,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Category modal
   modalCatOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
