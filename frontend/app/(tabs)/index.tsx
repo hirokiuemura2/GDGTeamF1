@@ -408,10 +408,10 @@ export default function Index() {
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.traInput, { flex: 1 }]}
-                placeholder="Amount"
+                placeholder="0.00"
                 placeholderTextColor="#aaa"
                 value={newAmount}
-                onChangeText={setNewAmount}
+                onChangeText={text => setNewAmount(text.replace(/[^0-9.]/g, ''))}
                 keyboardType="decimal-pad"
                 onFocus={() => {
                   setCurrencyDropdownVisible(false);
@@ -452,7 +452,7 @@ export default function Index() {
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.traInput, { flex: 1 }]}
-                placeholder="Name / description"
+                placeholder="Description"
                 placeholderTextColor="#aaa"
                 value={newDescription}
                 onChangeText={setNewDescription}
